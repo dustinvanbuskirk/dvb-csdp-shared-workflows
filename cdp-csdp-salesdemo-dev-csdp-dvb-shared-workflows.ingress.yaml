@@ -1,0 +1,17 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: cdp-csdp-salesdemo-dev-csdp-dvb-shared-workflows
+spec:
+  ingressClassName: nginx
+  rules:
+    - http:
+        paths:
+          - path: /webhooks/csdp-salesdemo-dev/argocd-guestbook-environments
+            backend:
+              service:
+                name: argocd-guestbook-environments-eventsource-svc
+                port:
+                  number: 80
+            pathType: Prefix
+      host: dev.csdp-salesdemo.sa.cf-cd.com
