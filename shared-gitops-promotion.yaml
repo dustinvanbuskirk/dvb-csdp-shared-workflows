@@ -1,0 +1,217 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: shared-gitops-promotion
+spec:
+  entrypoint: deploy-and-promote
+  serviceAccountName: shared-gitops-promotion
+  templates:
+    - name: deploy-and-promote
+      inputs:
+        parameters:
+          - name: ARGOCD_APP
+          - name: ARGOCD_SERVER
+            default: argocd-server
+          - name: REPO_OWNER
+          - name: REPO_URL
+          - name: PROMOTION_SOURCE_FILE
+          - name: PROMOTION_TARGET_FILE
+            default: 'nil'
+          - name: TARGET_DEPLOYMENT_BRANCH
+            default: 'main'
+          - name: TARGET_DEPLOYMENT_REPOSITORY
+          - name: SOURCE_DEPLOYMENT_BRANCH
+            default: 'main'
+          - name: SOURCE_FILE_PATH_PREFIX
+          - name: TARGET_FILE_PATH_PREFIX
+          - name: GIT_TOKEN_SECRET
+            default: 'github-token'
+      dag:
+        tasks:
+          # Sync Application
+          - name: argocd-sync
+            templateRef:
+              name: argo-hub.argocd.0.0.1
+              template: sync
+            arguments:
+              parameters:
+              - name: app
+                value: '{{ inputs.parameters.ARGOCD_APP }}'
+              - name: serverUrl
+                value: '{{ inputs.parameters.ARGOCD_SERVER }}'
+              - name: opts
+                value: '--insecure --plaintext'
+              - name: flags
+                value: '--prune'
+          # Run Deployment Verification Tests
+        #   - name: run-dvts
+        #     template: run-dvts
+        #     depends: argocd-sync
+          # Clone Source Repository
+          - name: clone-source-repo
+            templateRef:
+              name: argo-hub.git.0.0.2
+              template: clone
+            arguments:
+              parameters:
+                - name: REPO_URL
+                  value: '{{ inputs.parameters.REPO_URL }}'
+                - name: REVISION
+                  value: '{{ inputs.parameters.SOURCE_DEPLOYMENT_BRANCH }}'
+                - name: GIT_TOKEN_SECRET
+                  value: '{{ inputs.parameters.GIT_TOKEN_SECRET }}'
+            depends: run-dvts
+            when: '"{{ inputs.parameters.PROMOTION_TARGET_FILE }}" != "nil"'
+          # Check Source / Debugging
+        #   - name: check-source
+        #     template: check-source
+        #     arguments:
+        #       artifacts:
+        #         - name: repo
+        #           from: '{{ tasks.clone-source-repo.outputs.artifacts.repo }}'
+        #     depends: clone-source-repo
+        #     when: '"{{ inputs.parameters.PROMOTION_TARGET_FILE }}" != "nil"'
+          # Find Promotion Candidate Image
+          - name: find-promotion-candidate
+            template: find-promotion-candidate
+            arguments:
+              artifacts:
+                - name: repo
+                  from: '{{ tasks.clone-source-repo.outputs.artifacts.repo }}'
+            depends: clone-source-repo
+            when: '"{{ inputs.parameters.PROMOTION_TARGET_FILE }}" != "nil"'
+          # Clone Target Repository
+          - name: clone-target-repo
+            templateRef:
+              name: argo-hub.git.0.0.2
+              template: clone
+            arguments:
+              parameters:
+                - name: REPO_URL
+                  value: '{{ inputs.parameters.REPO_URL }}'
+                - name: REVISION
+                  value: '{{ inputs.parameters.TARGET_DEPLOYMENT_BRANCH }}'
+                - name: GIT_TOKEN_SECRET
+                  value: '{{ inputs.parameters.GIT_TOKEN_SECRET }}'
+            depends: find-promotion-candidate
+            when: '"{{ inputs.parameters.PROMOTION_TARGET_FILE }}" != "nil"'
+          # Promote Candidate Image
+          - name: promote-candidate
+            template: promote-candidate
+            arguments:
+              parameters:
+                - name: IMAGE
+                  value: '{{ tasks.grab-image.outputs.parameters.image }}'
+              artifacts:
+                - name: repo
+                  from: '{{ tasks.clone-target-repo.outputs.artifacts.repo }}'
+            depends: clone-target-repo
+            when: '"{{ inputs.parameters.PROMOTION_TARGET_FILE }}" != "nil"'
+          # GitOps Promote Candidate Image
+          - name: gitops-promotion
+            template: gitops-promotion
+            arguments:
+              parameters:
+                - name: GIT_TOKEN_SECRET
+                  value: '{{ inputs.parameters.GIT_TOKEN_SECRET }}'
+                - name: PROMOTION_TARGET_FILE
+                  value: '{{ inputs.parameters.PROMOTION_TARGET }}'
+                - name: FILE_PATH_PREFIX
+                  value: '{{ inputs.parameters.TARGET_FILE_PATH_PREFIX }}'
+              artifacts:
+                - name: repo
+                  from: '{{ tasks.modify-image.outputs.artifacts.repo }}'
+            depends: modify-image
+            when: '"{{ inputs.parameters.PROMOTION_TARGET_FILE }}" != "nil"'
+    # Run Deployment Verification Tests
+    # - name: run-dvts
+    #   container:
+    #     image: 'alpine'
+    #     command: [sh, -c]
+    #     args: ['ls']
+    # Check Source / Debugging
+    # - name: check-source
+    #   inputs:
+    #     artifacts:
+    #       - name: repo
+    #         path: /tmp/repo
+    #   script:
+    #     image: 'alpine'
+    #     command: [sh]
+    #     source: |
+    #       ls {{ inputs.artifacts.repo.path }}
+    # Find Promotion Candidate Image
+    - name: find-promotion-candidate
+      inputs:
+        artifacts:
+          - name: repo
+            path: /tmp/repo
+      outputs:
+        parameters:
+          - name: image
+            valueFrom:
+              path: /tmp/image.txt
+      script:
+        image: 'quay.io/codefresh/cli'
+        command: [sh]
+        source: |
+          yq '.image.tag' {{ inputs.artifacts.repo.path }}/{{ workflow.parameters.SOURCE_FILE_PATH_PREFIX }}/{{ workflow.parameters.PROMOTION_SOURCE_FILE }}  > /tmp/image.txt
+          cat /tmp/image.txt
+    # Promote Candidate Image
+    - name: promote-candidate
+      inputs:
+        artifacts:
+          - name: repo
+            path: /tmp/repo
+        parameters:
+          - name: IMAGE
+            value: '{{ inputs.parameters.IMAGE }}'
+      outputs:
+        artifacts:
+          - name: repo
+            path: /tmp/repo
+      script:
+        image: 'quay.io/codefresh/cli'
+        command: [sh]
+        source: |
+          echo {{ inputs.parameters.IMAGE }}
+          yq {{ inputs.artifacts.repo.path }}/{{ workflow.parameters.TARGET_FILE_PATH_PREFIX }}/{{ workflow.parameters.PROMOTION_TARGET_FILE }}
+    # GitOps Promote Candidate Image
+    - name: gitops-promotion
+      inputs:
+        artifacts:
+          - name: repo
+            path: /tmp/repo
+        parameters:
+          - name: GIT_TOKEN_SECRET
+            value: '{{ inputs.parameters.GIT_TOKEN_SECRET }}'
+          - name: PROMOTION_TARGET_FILE
+            value: '{{ inputs.parameters.PROMOTION_TARGET }}'
+          - name: FILE_PATH_PREFIX
+            value: '{{ inputs.parameters.TARGET_FILE_PATH_PREFIX }}'
+      container:
+        image: 'dustinvanbuskirk/jsonnet-gitops-step:1.0.1'
+        env:
+          - name: BRANCH
+            value: '{{ workflow.parameters.TARGET_DEPLOYMENT_BRANCH }}'
+          - name: TARGET_BRANCH
+            value: '{{ workflow.parameters.TARGET_DEPLOYMENT_BRANCH }}'
+          - name: TARGET_FILE
+            value: '{{ workflow.parameters.TARGET_FILE_PATH_PREFIX }}/{{ workflow.parameters.PROMOTION_TARGET_FILE }}'
+          - name: BUILD_URL
+            value: 'https://g.codefresh.io/2.0/workflows/{{ workflow.name}}'
+          - name: WORKING_DIRECTORY
+            value: '{{ inputs.artifacts.repo.path }}/{{ workflow.parameters.TARGET_FILE_PATH_PREFIX }}'
+          - name: REPO_OWNER
+            value: '{{ workflow.parameters.REPO_OWNER }}'
+          - name: REPO_NAME
+            value: '{{ workflow.parameters.TARGET_DEPLOYMENT_REPOSITORY }}'
+          - name: GITHUB_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: '{{ inputs.parameters.GIT_TOKEN_SECRET }}'
+                key: token
+          - name: FILE
+            value: '{{ inputs.parameters.PROMOTION_TARGET_FILE }}'
+        command: [python3]
+        args: [/github-committer.py]
