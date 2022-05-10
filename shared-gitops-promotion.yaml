@@ -267,8 +267,8 @@ spec:
         parameters:
           - name: GIT_TOKEN_SECRET
             value: '{{ inputs.parameters.GIT_TOKEN_SECRET }}'
-          - name: PROMOTION_TARGET_FILE
-            value: '{{ inputs.parameters.PROMOTION_TARGET_FILE }}'
+          - name: FILE
+            value: '{{ inputs.parameters.FILE }}'
           - name: FILE_PATH_PREFIX
             value: '{{ inputs.parameters.TARGET_FILE_PATH_PREFIX }}'
       container:
