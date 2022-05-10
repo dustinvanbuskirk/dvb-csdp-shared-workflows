@@ -28,8 +28,65 @@ spec:
             default: 'github-token'
           - name: KEY
             default: '.image.tag'
+          - name: KUSTOMIZE_REPOSITORY
+          - name: KUSTOMIZE_BRANCH
+          - name: KUSTOMIZE_FILE_PATH_PREFIX
+          - name: KUSTOMIZE_FILE
+          - name: REVISION
       dag:
         tasks:
+          # Clone Applications Repository
+          - name: clone-apps-repo
+            templateRef:
+              name: argo-hub.git.0.0.2
+              template: clone
+            arguments:
+              parameters:
+                - name: REPO_URL
+                  value: 'https://github.com/{{inputs.parameters.REPO_OWNER}}/{{ inputs.parameters.KUSTOMIZE_REPOSITORY }}.git'
+                - name: REVISION
+                  value: '{{ inputs.parameters.KUSTOMIZE_BRANCH }}'
+                - name: GIT_TOKEN_SECRET
+                  value: '{{ inputs.parameters.GIT_TOKEN_SECRET }}'
+            when: '"{{ inputs.parameters.PROMOTION_TARGET_FILE }}" != "nil"'
+          # Update values file URL for Kustomize Application
+          - name: update-kustomize-file
+            template: promote-candidate
+            arguments:
+              parameters:
+                - name: KEY
+                  value: '{{ inputs.parameters.KEY }}'
+                - name: VALUE
+                  value: 'https://raw.githubusercontent.com/{{inputs.parameters.REPO_OWNER}}/{{ inputs.parameters.KUSTOMIZE_REPOSITORY }}/{{ inputs.parameters.REVISION }}/{{ inputs.parameters.SOURCE_FILE_PATH_PREFIX }}/{{ .inputs.parameters.PROMOTION_SOURCE_FILE}}'
+                - name: FILE
+                  value: '{{ inputs.parameters.KUSTOMIZE_FILE }}'
+                - name: FILE_PATH_PREFIX
+                  value: '{{ inputs.parameters.KUSTOMIZE_FILE_PATH_PREFIX }}'
+              artifacts:
+                - name: repo
+                  from: '{{ tasks.clone-apps-repo.outputs.artifacts.repo }}'
+            depends: clone-apps-repo
+          # GitOps Update Kustomize File (Applications Repository)
+          - name: gitops-update-kustomize
+            template: gitops-promotion
+            arguments:
+              parameters:
+                - name: GIT_TOKEN_SECRET
+                  value: '{{ inputs.parameters.GIT_TOKEN_SECRET }}'
+                - name: FILE
+                  value: '{{ inputs.parameters.KUSTOMIZE_FILE }}'
+                - name: FILE_PATH_PREFIX
+                  value: '{{ inputs.parameters.KUSTOMIZE_FILE_PATH_PREFIX }}'
+                - name: BRANCH
+                  value: '{{ inputs.parameters.KUSTOMIZE_BRANCH }}'
+                - name: REPO_NAME
+                  value: '{{ inputs.parameters.KUSTOMIZE_REPOSITORY }}'
+                - name: REPO_OWNER
+                  value: '{{ inputs.parameters.REPO_OWNER }}'
+              artifacts:
+                - name: repo
+                  from: '{{ tasks.update-kustomize-file.outputs.artifacts.repo }}'
+            depends: update-kustomize-file
           # Sync Application
           - name: argocd-sync
             templateRef:
@@ -45,6 +102,7 @@ spec:
                 value: '--insecure --plaintext'
               - name: flags
                 value: '--prune'
+            depends: gitops-update-kustomize
           # Run Deployment Verification Tests
         #   - name: run-dvts
         #     template: run-dvts
@@ -109,6 +167,10 @@ spec:
                   value: '{{ inputs.parameters.KEY }}'
                 - name: VALUE
                   value: '{{ tasks.find-promotion-candidate.outputs.parameters.value }}'
+                - name: FILE
+                  value: '{{ inputs.parameters.PROMOTION_TARGET_FILE }}'
+                - name: FILE_PATH_PREFIX
+                  value: '{{ inputs.parameters.TARGET_FILE_PATH_PREFIX }}'
               artifacts:
                 - name: repo
                   from: '{{ tasks.clone-target-repo.outputs.artifacts.repo }}'
@@ -121,10 +183,16 @@ spec:
               parameters:
                 - name: GIT_TOKEN_SECRET
                   value: '{{ inputs.parameters.GIT_TOKEN_SECRET }}'
-                - name: PROMOTION_TARGET_FILE
+                - name: FILE
                   value: '{{ inputs.parameters.PROMOTION_TARGET_FILE }}'
                 - name: FILE_PATH_PREFIX
                   value: '{{ inputs.parameters.TARGET_FILE_PATH_PREFIX }}'
+                - name: BRANCH
+                  value: '{{ inputs.parameters.TARGET_DEPLOYMENT_BRANCH }}'
+                - name: REPO_NAME
+                  value: '{{ inputs.parameters.REPO_NAME }}'
+                - name: REPO_OWNER
+                  value: '{{ inputs.parameters.REPO_OWNER }}'
               artifacts:
                 - name: repo
                   from: '{{ tasks.promote-candidate.outputs.artifacts.repo }}'
@@ -178,6 +246,10 @@ spec:
             value: '{{ inputs.parameters.KEY }}'
           - name: VALUE
             value: '{{ inputs.parameters.VALUE }}'
+          - name: FILE_PATH_PREFIX
+            value: '{{ inputs.parameters.FILE_PATH_PREFIX }}
+          - name: FILE
+            value: '{{ inputs.parameters.FILE }}'
       outputs:
         artifacts:
           - name: repo
@@ -186,7 +258,7 @@ spec:
         image: 'quay.io/codefresh/cli'
         command: [sh]
         source: |
-          yq -i -y '{{ inputs.parameters.KEY }} = {{ inputs.parameters.VALUE }}' {{ inputs.artifacts.repo.path }}/{{ workflow.parameters.TARGET_FILE_PATH_PREFIX }}/{{ workflow.parameters.PROMOTION_TARGET_FILE }}
+          yq -i -y '{{ inputs.parameters.KEY }} = {{ inputs.parameters.VALUE }}' {{ inputs.artifacts.repo.path }}/{{ inputs.parameters.FILE_PATH_PREFIX }}/{{ input.parameters.FILE }}
     # GitOps Promote Candidate Image
     - name: gitops-promotion
       inputs:
@@ -204,19 +276,17 @@ spec:
         image: 'dustinvanbuskirk/jsonnet-gitops-step:1.0.1'
         env:
           - name: BRANCH
-            value: '{{ workflow.parameters.TARGET_DEPLOYMENT_BRANCH }}'
-          - name: TARGET_BRANCH
-            value: '{{ workflow.parameters.TARGET_DEPLOYMENT_BRANCH }}'
+            value: '{{ input.parameters.BRANCH }}'
           - name: TARGET_FILE
-            value: '{{ workflow.parameters.TARGET_FILE_PATH_PREFIX }}/{{ workflow.parameters.PROMOTION_TARGET_FILE }}'
+            value: '{{ input.parameters.FILE_PATH_PREFIX }}/{{ input.parameters.FILE }}'
           - name: BUILD_URL
             value: 'https://g.codefresh.io/2.0/workflows/{{ workflow.name}}'
           - name: WORKING_DIRECTORY
-            value: '{{ inputs.artifacts.repo.path }}/{{ workflow.parameters.TARGET_FILE_PATH_PREFIX }}'
+            value: '{{ inputs.artifacts.repo.path }}/{{ input.parameters.FILE_PATH_PREFIX }}'
           - name: REPO_OWNER
-            value: '{{ workflow.parameters.REPO_OWNER }}'
+            value: '{{ input.parameters.REPO_OWNER }}'
           - name: REPO_NAME
-            value: '{{ workflow.parameters.TARGET_DEPLOYMENT_REPOSITORY }}'
+            value: '{{ input.parameters.REPO_NAME }}'
           - name: GITHUB_TOKEN
             valueFrom:
               secretKeyRef:
