@@ -271,6 +271,12 @@ spec:
             value: '{{ inputs.parameters.FILE }}'
           - name: FILE_PATH_PREFIX
             value: '{{ inputs.parameters.TARGET_FILE_PATH_PREFIX }}'
+          - name: REPO_OWNER
+            value: '{{ inputs.parameters.REPO_OWNER }}'
+          - name: REPO_NAME
+            value: '{{ inputs.parameters.REPO_NAME }}'
+          - name: BRANCH
+            value: '{{ inputs.parameters.BRANCH }}'
       container:
         image: 'dustinvanbuskirk/jsonnet-gitops-step:1.0.1'
         env:
