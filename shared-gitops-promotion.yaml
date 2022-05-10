@@ -120,8 +120,8 @@ spec:
                   value: '{{ inputs.parameters.TARGET_FILE_PATH_PREFIX }}'
               artifacts:
                 - name: repo
-                  from: '{{ tasks.modify-image.outputs.artifacts.repo }}'
-            depends: modify-image
+                  from: '{{ tasks.promote-candidate.outputs.artifacts.repo }}'
+            depends: promote-candidate
             when: '"{{ inputs.parameters.PROMOTION_TARGET_FILE }}" != "nil"'
     # Run Deployment Verification Tests
     # - name: run-dvts
