@@ -283,9 +283,9 @@ spec:
           - name: WORKING_DIRECTORY
             value: '{{ inputs.artifacts.repo.path }}/{{ input.parameters.FILE_PATH_PREFIX }}'
           - name: REPO_OWNER
-            value: '{{ input.parameters.REPO_OWNER }}'
+            value: '{{ inputs.parameters.REPO_OWNER }}'
           - name: REPO_NAME
-            value: '{{ input.parameters.REPO_NAME }}'
+            value: '{{ inputs.parameters.REPO_NAME }}'
           - name: GITHUB_TOKEN
             valueFrom:
               secretKeyRef:
