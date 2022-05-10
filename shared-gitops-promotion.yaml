@@ -122,7 +122,7 @@ spec:
                 - name: GIT_TOKEN_SECRET
                   value: '{{ inputs.parameters.GIT_TOKEN_SECRET }}'
                 - name: PROMOTION_TARGET_FILE
-                  value: '{{ inputs.parameters.PROMOTION_TARGET }}'
+                  value: '{{ inputs.parameters.PROMOTION_TARGET_FILE }}'
                 - name: FILE_PATH_PREFIX
                   value: '{{ inputs.parameters.TARGET_FILE_PATH_PREFIX }}'
               artifacts:
@@ -197,7 +197,7 @@ spec:
           - name: GIT_TOKEN_SECRET
             value: '{{ inputs.parameters.GIT_TOKEN_SECRET }}'
           - name: PROMOTION_TARGET_FILE
-            value: '{{ inputs.parameters.PROMOTION_TARGET }}'
+            value: '{{ inputs.parameters.PROMOTION_TARGET_FILE }}'
           - name: FILE_PATH_PREFIX
             value: '{{ inputs.parameters.TARGET_FILE_PATH_PREFIX }}'
       container:
