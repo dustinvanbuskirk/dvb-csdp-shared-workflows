@@ -158,15 +158,15 @@ spec:
             value: '{{ inputs.parameters.KEY }}'
       outputs:
         parameters:
-          - name: image
+          - name: value
             valueFrom:
-              path: /tmp/image.txt
+              path: /tmp/value.txt
       script:
         image: 'quay.io/codefresh/cli'
         command: [sh]
         source: |
-          yq '{{ inputs.parameters.KEY }}' {{ inputs.artifacts.repo.path }}/{{ workflow.parameters.SOURCE_FILE_PATH_PREFIX }}/{{ workflow.parameters.PROMOTION_SOURCE_FILE }}  > /tmp/image.txt
-          cat /tmp/image.txt
+          yq '{{ inputs.parameters.KEY }}' {{ inputs.artifacts.repo.path }}/{{ workflow.parameters.SOURCE_FILE_PATH_PREFIX }}/{{ workflow.parameters.PROMOTION_SOURCE_FILE }}  > /tmp/value.txt
+          cat /tmp/value.txt
     # Promote Candidate Image
     - name: promote-candidate
       inputs:
