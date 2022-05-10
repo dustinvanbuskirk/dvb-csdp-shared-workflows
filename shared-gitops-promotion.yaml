@@ -186,7 +186,7 @@ spec:
         image: 'quay.io/codefresh/cli'
         command: [sh]
         source: |
-          yq -i -y '{{ inputs.parameters.KEY }} = "{{ inputs.parameters.VALUE }}"' {{ inputs.artifacts.repo.path }}/{{ workflow.parameters.TARGET_FILE_PATH_PREFIX }}/{{ workflow.parameters.PROMOTION_TARGET_FILE }}
+          yq -i -y '{{ inputs.parameters.KEY }} = {{ inputs.parameters.VALUE }}' {{ inputs.artifacts.repo.path }}/{{ workflow.parameters.TARGET_FILE_PATH_PREFIX }}/{{ workflow.parameters.PROMOTION_TARGET_FILE }}
     # GitOps Promote Candidate Image
     - name: gitops-promotion
       inputs:
