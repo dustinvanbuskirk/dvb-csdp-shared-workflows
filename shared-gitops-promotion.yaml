@@ -60,7 +60,7 @@ spec:
                   value: '{{ inputs.parameters.SOURCE_DEPLOYMENT_BRANCH }}'
                 - name: GIT_TOKEN_SECRET
                   value: '{{ inputs.parameters.GIT_TOKEN_SECRET }}'
-            depends: run-dvts
+        #    depends: run-dvts
             when: '"{{ inputs.parameters.PROMOTION_TARGET_FILE }}" != "nil"'
           # Check Source / Debugging
         #   - name: check-source
