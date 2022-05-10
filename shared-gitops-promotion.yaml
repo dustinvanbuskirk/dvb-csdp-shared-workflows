@@ -105,6 +105,8 @@ spec:
             template: promote-candidate
             arguments:
               parameters:
+                - name: KEY
+                  value: '{{ inputs.parameters.KEY }}'
                 - name: VALUE
                   value: '{{ tasks.grab-image.outputs.parameters.value }}'
               artifacts:
