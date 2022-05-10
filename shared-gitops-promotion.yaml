@@ -54,7 +54,7 @@ spec:
             arguments:
               parameters:
                 - name: KEY
-                  value: '.helmCharts.[0].valuesFile'
+                  value: '.helmCharts[0].valuesFile'
                 - name: VALUE
                   value: 'https://raw.githubusercontent.com/{{inputs.parameters.REPO_OWNER}}/{{ inputs.parameters.KUSTOMIZE_REPOSITORY }}/{{ inputs.parameters.REVISION }}/{{ inputs.parameters.SOURCE_FILE_PATH_PREFIX }}/{{ inputs.parameters.PROMOTION_SOURCE_FILE}}'
                 - name: FILE
