@@ -6,7 +6,7 @@ spec:
   entrypoint: deploy-and-promote
   serviceAccountName: shared-gitops-promotion
   templates:
-    - name: deploy-and-promote
+    - name: clone-apps-repo
       inputs:
         parameters:
           - name: ARGOCD_APP
