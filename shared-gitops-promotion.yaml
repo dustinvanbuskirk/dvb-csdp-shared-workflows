@@ -108,7 +108,7 @@ spec:
                 - name: KEY
                   value: '{{ inputs.parameters.KEY }}'
                 - name: VALUE
-                  value: '{{ tasks.grab-image.outputs.parameters.value }}'
+                  value: '{{ tasks.find-promotion-candidate.outputs.parameters.value }}'
               artifacts:
                 - name: repo
                   from: '{{ tasks.clone-target-repo.outputs.artifacts.repo }}'
