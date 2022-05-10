@@ -3,7 +3,7 @@ kind: WorkflowTemplate
 metadata:
   name: shared-gitops-promotion
 spec:
-  entrypoint: deploy-and-promote
+  entrypoint: clone-apps-repo
   serviceAccountName: shared-gitops-promotion
   templates:
     - name: clone-apps-repo
