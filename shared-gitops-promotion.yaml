@@ -189,7 +189,7 @@ spec:
                 - name: BRANCH
                   value: '{{ inputs.parameters.TARGET_DEPLOYMENT_BRANCH }}'
                 - name: REPO_NAME
-                  value: '{{ inputs.parameters.REPO_NAME }}'
+                  value: '{{ inputs.parameters.TARGET_DEPLOYMENT_REPOSITORY }}'
                 - name: REPO_OWNER
                   value: '{{ inputs.parameters.REPO_OWNER }}'
               artifacts:
