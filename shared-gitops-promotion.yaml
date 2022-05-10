@@ -3,10 +3,10 @@ kind: WorkflowTemplate
 metadata:
   name: shared-gitops-promotion
 spec:
-  entrypoint: clone-apps-repo
+  entrypoint: deploy-and-promote
   serviceAccountName: shared-gitops-promotion
   templates:
-    - name: clone-apps-repo
+    - name: deploy-and-promote
       inputs:
         parameters:
           - name: ARGOCD_APP
@@ -48,7 +48,6 @@ spec:
                   value: '{{ inputs.parameters.KUSTOMIZE_BRANCH }}'
                 - name: GIT_TOKEN_SECRET
                   value: '{{ inputs.parameters.GIT_TOKEN_SECRET }}'
-            when: '"{{ inputs.parameters.PROMOTION_TARGET_FILE }}" != "nil"'
           # Update values file URL for Kustomize Application
           - name: update-kustomize-file
             template: promote-candidate
