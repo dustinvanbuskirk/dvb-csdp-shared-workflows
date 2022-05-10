@@ -188,6 +188,7 @@ spec:
         source: |
           echo "{{ inputs.parameters.VALUE }}"
           echo "{{ inputs.artifacts.repo.path }}/{{ workflow.parameters.TARGET_FILE_PATH_PREFIX }}/{{ workflow.parameters.PROMOTION_TARGET_FILE }}"
+          cat "{{ inputs.artifacts.repo.path }}/{{ workflow.parameters.TARGET_FILE_PATH_PREFIX }}/{{ workflow.parameters.PROMOTION_TARGET_FILE }}"
           yq e -i '{{ inputs.parameters.KEY }} = "{{ inputs.parameters.VALUE }}"' {{ inputs.artifacts.repo.path }}/{{ workflow.parameters.TARGET_FILE_PATH_PREFIX }}/{{ workflow.parameters.PROMOTION_TARGET_FILE }}
     # GitOps Promote Candidate Image
     - name: gitops-promotion
