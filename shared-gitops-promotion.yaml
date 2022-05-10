@@ -26,6 +26,8 @@ spec:
           - name: TARGET_FILE_PATH_PREFIX
           - name: GIT_TOKEN_SECRET
             default: 'github-token'
+          - name: KEY
+            default: '.image.tag'
       dag:
         tasks:
           # Sync Application
@@ -75,6 +77,9 @@ spec:
           - name: find-promotion-candidate
             template: find-promotion-candidate
             arguments:
+              parameters:
+                - name: KEY
+                  value: '{{ inputs.parameters.KEY }}'
               artifacts:
                 - name: repo
                   from: '{{ tasks.clone-source-repo.outputs.artifacts.repo }}'
@@ -100,8 +105,8 @@ spec:
             template: promote-candidate
             arguments:
               parameters:
-                - name: IMAGE
-                  value: '{{ tasks.grab-image.outputs.parameters.image }}'
+                - name: VALUE
+                  value: '{{ tasks.grab-image.outputs.parameters.value }}'
               artifacts:
                 - name: repo
                   from: '{{ tasks.clone-target-repo.outputs.artifacts.repo }}'
@@ -146,6 +151,9 @@ spec:
         artifacts:
           - name: repo
             path: /tmp/repo
+        parameters:
+          - name: KEY
+            value: '{{ inputs.parameters.KEY }}'
       outputs:
         parameters:
           - name: image
@@ -155,7 +163,7 @@ spec:
         image: 'quay.io/codefresh/cli'
         command: [sh]
         source: |
-          yq '.image.tag' {{ inputs.artifacts.repo.path }}/{{ workflow.parameters.SOURCE_FILE_PATH_PREFIX }}/{{ workflow.parameters.PROMOTION_SOURCE_FILE }}  > /tmp/image.txt
+          yq '{{ inputs.parameters.KEY }}' {{ inputs.artifacts.repo.path }}/{{ workflow.parameters.SOURCE_FILE_PATH_PREFIX }}/{{ workflow.parameters.PROMOTION_SOURCE_FILE }}  > /tmp/image.txt
           cat /tmp/image.txt
     # Promote Candidate Image
     - name: promote-candidate
@@ -164,8 +172,10 @@ spec:
           - name: repo
             path: /tmp/repo
         parameters:
-          - name: IMAGE
-            value: '{{ inputs.parameters.IMAGE }}'
+          - name: KEY
+            value: '{{ inputs.parameters.KEY }}'
+          - name: VALUE
+            value: '{{ inputs.parameters.VALUE }}'
       outputs:
         artifacts:
           - name: repo
@@ -174,8 +184,8 @@ spec:
         image: 'quay.io/codefresh/cli'
         command: [sh]
         source: |
-          echo {{ inputs.parameters.IMAGE }}
-          yq {{ inputs.artifacts.repo.path }}/{{ workflow.parameters.TARGET_FILE_PATH_PREFIX }}/{{ workflow.parameters.PROMOTION_TARGET_FILE }}
+          echo {{ inputs.parameters.VALUE }}
+          yq e -i '{{ inputs.parameters.KEY }} = "{{ inputs.parameters.VALUE }}"' {{ inputs.artifacts.repo.path }}/{{ workflow.parameters.TARGET_FILE_PATH_PREFIX }}/{{ workflow.parameters.PROMOTION_TARGET_FILE }}
     # GitOps Promote Candidate Image
     - name: gitops-promotion
       inputs:
