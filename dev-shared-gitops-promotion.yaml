@@ -233,6 +233,6 @@ spec:
                 name: '{{ inputs.parameters.GIT_TOKEN_SECRET }}'
                 key: token
           - name: FILE
-            value: '{{ inputs.parameters.TARGET_FILE_PATH_PREFIX }}/{{ inputs.parameters.PROMOTION_TARGET_FILE }}'
+            value: '{{ inputs.parameters.PROMOTION_TARGET_FILE }}'
         command: [python3]
         args: [/github-committer.py]
