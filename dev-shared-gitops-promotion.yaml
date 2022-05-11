@@ -211,7 +211,7 @@ spec:
           - name: CREATE_PULL_REQUEST
             value: '{{ inputs.parameters.CREATE_PULL_REQUEST }}'
       container:
-        image: 'dustinvanbuskirk/jsonnet-gitops-step:1.0.2-beta-5'
+        image: 'dustinvanbuskirk/jsonnet-gitops-step:1.0.2-beta-6'
         env:
           - name: TARGET_BRANCH
             value: '{{ inputs.parameters.TARGET_DEPLOYMENT_BRANCH }}'
