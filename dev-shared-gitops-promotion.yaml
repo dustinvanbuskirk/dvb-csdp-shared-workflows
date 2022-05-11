@@ -127,6 +127,9 @@ spec:
                   value: '{{ inputs.parameters.TARGET_FILE_PATH_PREFIX }}'
                 - name: REPO_OWNER
                   value: '{{ inputs.parameters.REPO_OWNER }}'
+              artifacts:
+                - name: repo
+                  from: '{{ tasks.modify-image.outputs.artifacts.repo }}'
             depends: modify-image
             when: '"{{ inputs.parameters.PROMOTION_TARGET_FILE }}" != "nil"'
     # Container Tests of Deployment
