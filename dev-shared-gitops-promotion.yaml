@@ -211,9 +211,9 @@ spec:
           - name: CREATE_PULL_REQUEST
             value: '{{ inputs.parameters.CREATE_PULL_REQUEST }}'
       container:
-        image: 'dustinvanbuskirk/jsonnet-gitops-step:1.0.2-beta-1'
+        image: 'dustinvanbuskirk/jsonnet-gitops-step:1.0.2-beta-2'
         env:
-          - name: BRANCH
+          - name: TARGET_BRANCH
             value: '{{ inputs.parameters.TARGET_DEPLOYMENT_BRANCH }}'
           - name: BUILD_URL
             value: 'https://g.codefresh.io/2.0/workflows/{{ workflow.name }}'
