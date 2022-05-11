@@ -18,7 +18,7 @@ spec:
           - name: PROMOTION_TARGET_FILE
             default: 'nil'
           - name: TARGET_DEPLOYMENT_BRANCH
-            default: '{{ workflow.uid }}'
+            default: 'main'
           - name: TARGET_DEPLOYMENT_REPOSITORY
           - name: SOURCE_DEPLOYMENT_BRANCH
             default: 'main'
@@ -198,9 +198,7 @@ spec:
         image: 'dustinvanbuskirk/jsonnet-gitops-step:1.0.2-alpha'
         env:
           - name: BRANCH
-            value: '{{ workflow.parameters.SOURCE_DEPLOYMENT_BRANCH }}'
-          - name: TARGET_BRANCH
-            value: '{{ input.parameters.TARGET_DEPLOYMENT_BRANCH }}'
+            value: '{{ workflow.parameters.TARGET_DEPLOYMENT_BRANCH }}'
           - name: TARGET_FILE
             value: '{{ workflow.parameters.TARGET_FILE_PATH_PREFIX }}/{{ workflow.parameters.PROMOTION_TARGET_FILE }}'
           - name: BUILD_URL
@@ -213,6 +211,8 @@ spec:
             value: '{{ workflow.parameters.TARGET_DEPLOYMENT_REPOSITORY }}'
           - name: CREATE_PULL_REQUEST
             value: '{{ input.parameters.CREATE_PULL_REQUEST }}'
+          - name: PULL_REQUEST_BRANCH
+            value: '{{ workflow.uid }}'
           - name: GITHUB_TOKEN
             valueFrom:
               secretKeyRef:
