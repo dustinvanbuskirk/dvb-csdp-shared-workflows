@@ -123,6 +123,8 @@ spec:
                   value: '{{ input.parameters.CREATE_PULL_REQUEST }}'
                 - name: TARGET_DEPLOYMENT_BRANCH
                   value: '{{ input.parameters.TARGET_DEPLOYMENT_BRANCH }}'
+                - name: TARGET_DEPLOYMENT_REPOSITORY
+                  value: '{{ input.parameters.TARGET_DEPLOYMENT_REPOSITORY }}'
                 - name: TARGET_FILE_PATH_PREFIX
                   value: '{{ inputs.parameters.TARGET_FILE_PATH_PREFIX }}'
                 - name: REPO_OWNER
