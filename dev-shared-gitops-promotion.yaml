@@ -195,7 +195,7 @@ spec:
           - name: GIT_TOKEN_SECRET
             value: '{{ inputs.parameters.GIT_TOKEN_SECRET }}'
       container:
-        image: 'dustinvanbuskirk/jsonnet-gitops-step:1.0.2-alpha'
+        image: 'dustinvanbuskirk/jsonnet-gitops-step:1.0.2-beta'
         env:
           - name: BRANCH
             value: '{{ workflow.parameters.TARGET_DEPLOYMENT_BRANCH }}'
