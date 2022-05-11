@@ -91,7 +91,7 @@ spec:
                 - name: REPO_URL
                   value: '{{ inputs.parameters.REPO_URL }}'
                 - name: REVISION
-                  value: '{{ inputs.parameters.TARGET_DEPLOYMENT_BRANCH }}'
+                  value: 'main'
                 - name: GIT_TOKEN_SECRET
                   value: '{{ inputs.parameters.GIT_TOKEN_SECRET }}'
             depends: grab-image
