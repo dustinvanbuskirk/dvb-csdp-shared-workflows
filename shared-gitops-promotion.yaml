@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: dvb-shared-gitops-promotion
+  name: shared-gitops-promotion
 spec:
   entrypoint: deploy-and-promote
   serviceAccountName: shared-gitops-promotion
